@@ -1,3 +1,8 @@
+var tag = document.createElement("script");
+tag.src = "https://www.youtube.com/iframe_api";
+var firstScriptTag = document.getElementsByTagName("script")[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
 // Initialize the YouTube player
 let player;
 //const playBtn = document.getElementById("btn-play-video");
@@ -13,7 +18,7 @@ function createYouTubePlayer(videoId) {
   iframe.id = "youtube-iframe";
   iframe.width = "100%"; // Set the desired width
   iframe.height = "100%"; // Set the desired height
-  iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&controls=0`;
+  iframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&controls=0&autoplay=1`;
   iframe.allow =
     "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
   iframe.allowFullscreen = true;
@@ -35,7 +40,12 @@ function createYouTubePlayer(videoId) {
 
 //destroyVideo
 function destroyYouTubePlayer() {
-  player.stopVideo();
+  if (player) {
+    player.stopVideo();
+    player.destroy();
+    player = null;
+  }
+
   hytPlayerWrap.innerHTML = "";
   modal.style.display = "none";
 }
@@ -51,12 +61,16 @@ function onPlayerStateChange(event) {
   // Example: Log the state changes
 
   //console.log("Player State Changed:", event.data);
+  if (event.data === -1) {
+    hytPlayerWrap.classList.remove("active");
+  }
   if (event.data === 0) {
     //ended
     hytPlayerWrap.classList.add("ended");
   }
   if (event.data === 1) {
     //playing
+    hytPlayerWrap.classList.add("active");
     hytPlayerWrap.classList.remove("ended");
     hytPlayerWrap.classList.remove("paused");
   }
@@ -80,7 +94,7 @@ hytPlayerWrap.addEventListener("click", function () {
 // Loop through each button to add event listener
 playButtons.forEach(function (button) {
   // Add click event listener to each button
-  console.log("playbuttons");
+  //console.log("playbuttons");
   button.addEventListener("click", function () {
     // Get the 'ytid' attribute value from the clicked button
     const videoId = button.getAttribute("ytid");
