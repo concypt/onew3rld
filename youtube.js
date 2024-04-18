@@ -1,7 +1,9 @@
-var tag = document.createElement("script");
-tag.src = "https://www.youtube.com/iframe_api";
-var firstScriptTag = document.getElementsByTagName("script")[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+if (typeof YT === "undefined") {
+  var tag = document.createElement("script");
+  tag.src = "https://www.youtube.com/iframe_api";
+  var firstScriptTag = document.getElementsByTagName("script")[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+}
 
 // Initialize the YouTube player
 let player;
@@ -117,4 +119,54 @@ document.addEventListener("keydown", function (event) {
   if (event.key === "Escape") {
     destroyYouTubePlayer();
   }
+});
+
+window.hideYTActivated = false;
+
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.hideYTActivated) return;
+
+  let onYouTubeIframeAPIReadyCallbacks = [];
+
+  for (let playerWrap of document.querySelectorAll("[chytElement]")) {
+    playerWrap.classList.add("chytInner");
+    playerWrap.parentElement.classList.add("chytOuter");
+    let playerFrame = playerWrap.querySelector("iframe");
+    playerFrame.src += "&enablejsapi=1";
+    playerWrap.classList.add("active");
+    let onPlayerStateChange1 = function (event) {
+      if (event.data == 0) {
+        playerWrap.classList.add("ended");
+        playerWrap.classList.remove("active");
+      } else if (event.data == 2) {
+        playerWrap.classList.add("paused");
+      } else if (event.data == 1) {
+        playerWrap.classList.remove("ended");
+        playerWrap.classList.remove("paused");
+        playerWrap.classList.add("active");
+      }
+    };
+    let chytPlayer;
+    onYouTubeIframeAPIReadyCallbacks.push(function () {
+      chytPlayer = new YT.Player(playerFrame, {
+        events: { onStateChange: onPlayerStateChange1 },
+      });
+    });
+    playerWrap.addEventListener("click", function () {
+      let playerState = chytPlayer.getPlayerState();
+
+      if (playerState == 0) {
+        chytPlayer.seekTo(0);
+      } else if (playerState == 2) {
+        chytPlayer.playVideo();
+      }
+    });
+  }
+  window.onYouTubeIframeAPIReady = function () {
+    for (let callback of onYouTubeIframeAPIReadyCallbacks) {
+      callback();
+    }
+  };
+
+  window.hideYTActivated = true;
 });
